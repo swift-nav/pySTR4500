@@ -1,0 +1,70 @@
+ 1,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\all_sims.txt
+ 2,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_de_1\AIR_DE_1.sim
+ 3,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_eu_apl_1\AIR_EU_APL_1.sim
+ 4,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_eu_oval_1\AIR_EU_OVAL_1.sim
+ 5,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_ind_apl_1\AIR_IND_APL_1.sim
+ 6,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_jap_1\AIR_JAP_1.sim
+ 7,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_jfk_apl_1\AIR_JFK_APL_1.sim
+ 8,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_la_to_1\AIR_LA_TO_1.sim
+ 9,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_la_to_2\AIR_LA_TO_2.sim
+10,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_north_atlantic_straight_level_1\AIR_NORTH_ATLANTIC_STRAIGHT_LEVEL.sim
+11,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_north_atlantic_straight_level_2\AIR_N_ATLANTIC_STRT_LEVEL_1.sim
+12,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_seoul_to_1\AIR_SEOUL_TO_1.sim
+13,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_tk_to_1\AIR_TK_TO_1.sim
+14,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_us_1\AIR_US_1.sim
+15,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_us_2\AIR_US_2.sim
+16,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_figure_8\CAR_FIGURE_8.sim
+17,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_kumi_1\CAR_KUMI_1.sim
+18,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_kumi_2\CAR_KUMI_2.sim
+19,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_kumi_3\CAR_KUMI_3.sim
+20,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_la_1\CAR_LA_1.sim
+21,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_la_2\CAR_LA_2.sim
+22,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_la_3\CAR_LA_3.sim
+23,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_la_4\CAR_LA_4.sim
+24,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_st_1\CAR_ST_1.sim
+25,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_st_2\CAR_ST_2.sim
+26,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\car_tok_1\CAR_TOK_1.sim
+27,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Car Scenarios\pedestrian_tokyo_1\PEDESTRIAN_TOKYO_1.sim
+28,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Example Scenario 1\example_scenario_1.sim
+29,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Example Scenario 2\example_scenario_2.sim
+30,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_aus_1\SHIP_AUS_1.sim
+31,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_eu_1\SHIP_EU_1.sim
+32,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_flo_1\SHIP_FLO_1_V4.sim
+33,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_honolulu\SHIP_HONOLULU.sim
+34,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_med_1\SHIP_MED_1.sim
+35,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_med_2\SHIP_MED_2.sim
+36,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_med_3\SHIP_MED_3.sim
+37,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_med_4\SHIP_MED_4.sim
+38,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_med_5\SHIP_MED_5.sim
+39,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Ship Scenarios\ship_pusan_1\SHIP_PUSAN_1.sim
+40,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Spacecraft Scenarios\sc_1_leo\SC_1_LEO.sim
+41,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Spacecraft Scenarios\sc_2_geo\SC_2_GEO.sim
+42,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Spacecraft Scenarios\sc_3_leo\SC_3_LEO.sim
+43,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Spacecraft Scenarios\sc_4_meo\SC_4_MEO.sim
+44,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_ao_1\sim_nmea.txt
+45,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_ao_1\STATIC_AO_1.sim
+46,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_as_1\STATIC_AS_1.sim
+47,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_as_2\STATIC_AS_2.sim
+48,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_as_3\STATIC_AS_3.sim
+49,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_aus_1\STATIC_AUS_1.sim
+50,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_eu_1\STATIC_EU_1.sim
+51,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_eu_2\STATIC_EU_2.sim
+52,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_eu_3\STATIC_EU_3.sim
+53,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_io_1\STATIC_IO_1.sim
+54,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_kumi_1\STATIC_KUMI_1.sim
+55,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_la_1\STATIC_LA_1.sim
+56,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_ls_ptn_1\STATIC_LS_PTN_1.sim
+57,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_1\STATIC_NA_1.sim
+58,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_2\STATIC_NA_2.sim
+59,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_3\STATIC_NA_3.sim
+60,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_4\STATIC_NA_4.sim
+61,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_5\STATIC_NA_5.sim
+62,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_6\STATIC_NA_6.sim
+63,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_7\STATIC_NA_7.sim
+64,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_na_8\STATIC_NA_8.sim
+65,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_np_1\STATIC_NP_1.sim
+66,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_po_1\STATIC_PO_1.sim
+67,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_po_2\STATIC_PO_2.sim
+68,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_so_1\STATIC_SO_1.sim
+69,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_sp_1\STATIC_SP_1.sim
+70,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Static Scenarios\static_taipei_no_errors\STATIC_TAIPEI_NO_ERRORS.sim
