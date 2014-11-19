@@ -1,12 +1,11 @@
- 1,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\all_sims.txt
- 2,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_de_1\AIR_DE_1.sim
- 3,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_eu_apl_1\AIR_EU_APL_1.sim
- 4,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_eu_oval_1\AIR_EU_OVAL_1.sim
- 5,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_ind_apl_1\AIR_IND_APL_1.sim
- 6,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_jap_1\AIR_JAP_1.sim
- 7,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_jfk_apl_1\AIR_JFK_APL_1.sim
- 8,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_la_to_1\AIR_LA_TO_1.sim
- 9,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_la_to_2\AIR_LA_TO_2.sim
+2,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_de_1\AIR_DE_1.sim
+3,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_eu_apl_1\AIR_EU_APL_1.sim
+4,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_eu_oval_1\AIR_EU_OVAL_1.sim
+5,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_ind_apl_1\AIR_IND_APL_1.sim
+6,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_jap_1\AIR_JAP_1.sim
+7,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_jfk_apl_1\AIR_JFK_APL_1.sim
+8,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_la_to_1\AIR_LA_TO_1.sim
+9,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_la_to_2\AIR_LA_TO_2.sim
 10,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_north_atlantic_straight_level_1\AIR_NORTH_ATLANTIC_STRAIGHT_LEVEL.sim
 11,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_north_atlantic_straight_level_2\AIR_N_ATLANTIC_STRT_LEVEL_1.sim
 12,C:\Program Files\Spirent Communications\SimPLEX\Scenarios\Aircraft Scenarios\air_seoul_to_1\AIR_SEOUL_TO_1.sim

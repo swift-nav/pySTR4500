@@ -22,7 +22,7 @@ setup(name='pySTR4500',
       maintainer_email='mookerji@swiftnav.com',
       url='https://github.com/swift-nav/pySTR4500',
       keywords='',
-      install_requires=requirements,
+      # install_requires=requirements,
       classifiers=[
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',

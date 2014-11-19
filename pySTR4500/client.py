@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Copyright (C) 2014 Swift Navigation Inc.
 # API documentation:
-# Copyright © Spirent Communications SW Ltd
+# Copyright (C) Spirent Communications SW Ltd.
 # Contact: Bhaskar Mookerji <mookerji@swiftnav.com>
 #
 # This source is subject to the license found in the file 'LICENSE' which must
@@ -42,7 +42,7 @@ STATUS_VALUES = {
   0x05 : "Paused",
   0x06 : "Ended"
 }
-# test_string = "<msg><status>6</status></msg>"
+VEHICLE_ANTENNA = "v1_a1"
 
 class CommandResponse(object):
   """
@@ -59,11 +59,35 @@ class CommandResponse(object):
 
   """
 
-  def __init__(self, response):
+  def __init__(self, status=None, data=None):
+    self.status = status
+    self.data = data
+
+  def __repr__(self):
+    val = (self.status, self.data)
+    formatted = "<CommandResponse (status = %s, data = %s)>"
+    return formatted % val
+
+  @staticmethod
+  def fromstring(response):
+    """
+    Construct a CommandResponse from an XML string.
+
+    Parameters
+    ----------
+    response : str
+      XML string response from the STR4500.
+
+    Returns
+    ----------
+    response : CommandResponse
+
+    """
     p = ET.fromstring(response)
+    status = None
     if p.find('status') is not None:
       try:
-        self.status = STATUS_VALUES[int(p.find('status').text)]
+        status = STATUS_VALUES[int(p.find('status').text)]
       except KeyError:
         raise RuntimeError("Invalid STR4500 status.")
     else:
@@ -71,13 +95,279 @@ class CommandResponse(object):
     if p.find('error') is not None:
       msg = p.find('error').text
       raise RuntimeError("STR4500 returned error: %s" % msg)
-    self.data = float(p.find('data').text) if p.find('data') else None
+    data = p.find('data').text if p.find('data') else None
+    return CommandResponse(status, data)
 
-  def __repr__(self):
-    val = (self.status, self.data)
-    formatted = "<CommandResponse (status = %s, data = %s)>"
-    return formatted % val
+def encode(cmd):
+  """
+  Formats a command (vector->comma-delimited string), for sending
+  over the wire.
 
+  STR4500 Telnet commands actually look like:
+    "-,POW_LEV ,v1_a1,10.5,23,0,0,1"
+    "RU"
+    "0 00:05:00,EN,2"
+
+  """
+  return ','.join(map(str, cmd))
+
+def dispatch(sock, msg):
+  """
+  Blocking I/O to the socket.
+
+  Parameters
+  ----------
+  sock : socket
+    Open network socket
+  msg : str
+    Command string
+
+  Returns
+  ----------
+  response : str
+    XML response string.
+
+  """
+  sock.send(msg)
+  return sock.recv(BUFFER_SIZE)
+
+def handle(sock, cmd):
+  """
+  Given a command tuple, encode, issue, and decode.
+
+  Parameters
+  ----------
+  sock : socket
+    Open network socket
+  cmd : [str]
+    Vector of command parameters.
+
+  Returns
+  ----------
+  response : CommandResponse
+
+  """
+  print encode(cmd)
+  return CommandResponse.fromstring(dispatch(sock, encode(cmd)))
+
+class Channel(object):
+  """
+  Controller for PRN channel.
+  """
+
+  is_chan = int(True)
+  all_chans = int(False)
+
+  def __init__(self, sock):
+    self._socket = sock
+
+  @staticmethod
+  def is_valid(chan):
+    return bool(chan is not None and 0 <= chan <= 11)
+
+  def set_power(self, chan, on, timestamp="-"):
+    """
+    Power ON/OFF channel.
+
+    Parameters
+    ----------
+    chan : int
+      Channel number (0 to 11).
+    on : bool
+      True = power ON;
+      False = OFF
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    if not Channel.is_valid(chan):
+      raise ValueError("Invalid channel value.")
+    cmd = [timestamp, "POW_ON", VEHICLE_ANTENNA, int(on), chan,
+           Channel.is_chan, Channel.all_chans]
+    return handle(self._socket, cmd)
+
+  def set_power_mode(self, chan, mode, timestamp="-"):
+    """
+    Set channel power mode.
+
+    Parameters
+    ----------
+    chan : int
+      Channel number (0 to 11).
+    mode : int
+      0 = Absolute power
+      1 = Relative to current simulation power
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    if not Channel.is_valid(chan):
+      raise ValueError("Invalid channel value.")
+    cmd = [timestamp, "POW_MODE", VEHICLE_ANTENNA, mode, chan,
+           Channel.is_chan, Channel.all_chans]
+    return handle(self._socket, cmd)
+
+  def set_power_level(self, chan, level, absolute, timestamp="-"):
+    """
+    Set channel power level.
+
+    Parameters
+    ----------
+    chan : int
+      Channel number (0 to 11).
+    level : float
+      Power level, dB (with respect to the Stanag minimum).
+    absolute : bool
+      True = absolute power level,
+      False = relative to current simulated power.
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    if not Channel.is_valid(chan):
+      raise ValueError("Invalid channel value.")
+    cmd = [timestamp, "POW_LEV", VEHICLE_ANTENNA, level, chan, Channel.is_chan,
+           Channel.all_chans, int(absolute)]
+    return handle(self._socket, cmd)
+
+  def set_prn(self, chan, on, timestamp="-"):
+    """
+    Set channel PRN code on/off.
+
+    Parameters
+    ----------
+    chan : int
+      channel no. (0 to 11)
+    on : bool
+      True = PRN code ON,
+      False = PRN code OFF.
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received.
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    if not Channel.is_valid(chan):
+      raise ValueError("Invalid channel value.")
+    cmd = [timestamp, "PRN_CODE", chan, Channel.all_chans, int(on)]
+    return handle(self._socket, cmd)
+
+class Satellite(object):
+  """
+  Controller by satellite ID.
+  """
+
+  is_chan = int(True)
+  all_chans = int(False)
+
+  def __init__(self, sock):
+    self._socket = sock
+
+  @staticmethod
+  def is_valid(sat):
+    return bool(sat is not None and 0 < sat <= 32)
+
+  def set_power(self, sat, on, timestamp="-"):
+    """
+    Power ON/OFF satellite.
+
+    Parameters
+    ----------
+    sat : int
+      Satellite number (1 to 32).
+    on : bool
+      True = power ON;
+      False = OFF
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    cmd = [timestamp, "POW_ON", VEHICLE_ANTENNA, int(on), sat,
+           Satellite.is_chan, Satellite.all_chans]
+    return handle(self._socket, cmd)
+
+  def set_power_mode(self, sat, mode, timestamp="-"):
+    """
+    Set satellite power mode.
+
+    Parameters
+    ----------
+    sat : int
+      Satellite number (1 to 32).
+    mode : int
+      0 = Absolute power
+      1 = Relative to current simulation power
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    if not Satellite.is_valid(sat):
+      raise ValueError("Invalid satellite value.")
+    cmd = [timestamp, "POW_MODE", VEHICLE_ANTENNA, mode, sat,
+           Satellite.is_chan, Satellite.all_chans]
+    return handle(self._socket, cmd)
+
+  def set_power_level(self, sat, level, absolute, timestamp="-"):
+    """
+    Set satellite power level.
+
+    Parameters
+    ----------
+    sat : int
+      Satellite ID number (1 to 32).
+    level : float
+      Power level, dB (with respect to the Stanag minimum).
+    absolute : bool
+      True = absolute power level
+      False = relative to current simulated power.
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
+
+    Returns
+    -------
+    response : CommandResponse
+
+    """
+    if not Satellite.is_valid(sat):
+      raise ValueError("Invalid satellite value.")
+    cmd = [timestamp, "POW_LEV", VEHICLE_ANTENNA, level, sat, Satellite.is_chan,
+           Satellite.all_chans, int(absolute)]
+    return handle(self._socket, cmd)
 
 class STR4500(object):
   """
@@ -98,6 +388,10 @@ class STR4500(object):
 
   """
 
+  chan = 0
+  is_chan = int(True)
+  all_chans = int(True)
+
   def __init__(self, host="127.0.0.1", port=15650):
     self.host = host
     self.port = port
@@ -105,7 +399,10 @@ class STR4500(object):
     self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     self._socket.connect((self.host, self.port))
     self._socket.setblocking(1)
-    self.connected = self.null() is not None
+    # Issue a status check for network connection.
+    self.connected = self.status() is not None
+    self.chan = Channel(self._socket)
+    self.sat = Satellite(self._socket)
 
   def __del__(self):
     if self._socket:
@@ -117,55 +414,12 @@ class STR4500(object):
     formatted = "<STR4500 (host = %s, port = %s, connected = %s)>"
     return formatted % val
 
-  @staticmethod
-  def encode(cmd):
-    """
-    Formats a command (as comma-delimited), for sending over the wire.
-
-    STR4500 Telnet commands actually look like:
-      "-,POW_LEV ,v1_a1,10.5,23,0,0,1"
-      "RU"
-      "0 00:05:00,EN,2"
-
-    """
-    return ','.join(map(str, cmd))
-
-  def timestamp(self):
-    """
-    Timestamp is either: the time into run to apply command; or, if '-'
-    command is applied, when command is received.
-
-    """
-    return "-"
-
-  def _dispatch(self, msg):
-    """
-    Blocking I/O to the socket.
-
-    Parameters
-    ----------
-    msg : str
-      Command string
-
-    Returns
-    ----------
-    response : str
-      XML response string.
-
-    """
-    self._socket.send(msg)
-    return self._socket.recv(BUFFER_SIZE)
-
-  def _handle(self, cmd):
-    """
-    Given a command tuple, encode, issue, and decode.
-    """
-    return CommandResponse(self._dispatch(self.encode(cmd)))
-
+#TODO (Buro): test this one.
   def select_scenario(self, filename):
     """
     Select scenario. select_scenario may be called before a scenario has run,
-    or after a scenario has been rewound.
+    or after a scenario has been rewound. See pySTR4500 for easy selection
+    of sims.
 
     Parameters
     ----------
@@ -178,11 +432,11 @@ class STR4500(object):
 
     """
     cmd = ["SC", filename]
-    return self._handle(cmd)
+    return handle(self._socket, cmd)
 
   def set_trigger(self, mode):
     """
-    Set trigger mode to mode.:
+    Set trigger mode to mode.
 
     Parameters
     ----------
@@ -200,7 +454,7 @@ class STR4500(object):
     if mode not in [0, 1, 2]:
       raise ValueError("Invalid trigger mode.")
     cmd = ["TR", mode]
-    return self._handle(cmd)
+    return handle(self._socket, cmd)
 
   def run_scenario(self):
     """
@@ -214,11 +468,11 @@ class STR4500(object):
 
     """
     cmd = ["RU"]
-    return self._handle(cmd)
+    return handle(self._socket, cmd)
 
-  def null(self):
+  def status(self):
     """
-    This command just elicits a response from SimPLEX.
+    Elicit a status response from SimPLEX.
 
     Returns
     -------
@@ -226,7 +480,7 @@ class STR4500(object):
 
     """
     cmd = ["NULL"]
-    return self._handle(cmd)
+    return handle(self._socket, cmd)
 
   def end_scenario(self, timestamp="-", stop_mode=0, save=True):
     """
@@ -255,8 +509,8 @@ class STR4500(object):
     """
     if stop_mode not in [0, 1, 2]:
       raise ValueError("Invalid value of n.")
-    cmd = [timestamp, "EN", stop_mode, 1 if save else 0]
-    return self._handle(cmd)
+    cmd = [timestamp, "EN", stop_mode, int(save)]
+    return handle(self._socket, cmd)
 
   def rewind_scenario(self):
     """
@@ -271,26 +525,17 @@ class STR4500(object):
     response : CommandResponse
     """
     cmd = ["RW"]
-    return self._handle(cmd)
+    return handle(self._socket, cmd)
 
-#TODO (Buro): check boolean conversions.
-
-  def power_on(self, on, all_chans, chan=None, sat=None, timestamp="-"):
+  def set_power(self, on, timestamp="-"):
     """
-    Power ON / OFF.
+    Power ON/OFF all channels.
 
     Parameters
     ----------
     on : bool
-      True: = power ON; False = OFF
-    all_chans : bool
-      True = apply to all channels
-      False = apply to specified channel or satellite only
-    chan : int
-      Channel number (0 to 11). You can specify either an channel or
-      satellite, but not both.
-    sat : int
-      Satellite ID number (1 to 32).
+      True = power ON;
+      False = OFF
     timestamp : str, optional
       timestamp is either: the time into run to apply command; or, if
       "-" command is applied, when command is received. Defaults to
@@ -301,37 +546,19 @@ class STR4500(object):
     response : CommandResponse
 
     """
-    vehicle_antenna = "v1_a1"
-    if chan and sat:
-      raise ValueError("Can't set both satellite and channel simultaneously.")
-    elif chan and (0 <= chan < 12):
-      cmd = [timestamp, "POW_ON", vehicle_antenna, 1 if on else 0, chan, 1,
-             1 if all_chans else 0]
-      return self._handle(cmd)
-    elif sat and (1 <= sat < 33):
-      cmd = [timestamp, "POW_ON", vehicle_antenna, 1 if on else 0, sat, 0,
-             1 if all_chans else 0]
-      return self._handle(cmd)
-    else:
-      raise ValueError("Invalid channel/satellite value.")
+    cmd = [timestamp, "POW_ON", VEHICLE_ANTENNA, int(on), STR4500.chan,
+           STR4500.is_chan, STR4500.all_chans]
+    return handle(self._socket, cmd)
 
-  def set_power_mode(self, all_chans, mode, timestamp="-", chan=None, sat=None):
+  def set_power_mode(self, mode, timestamp="-"):
     """
-    Set power mode.
+    Set power mode for all channels.
 
     Parameters
     ----------
-    all_chans : bool
-      True = apply to specified channel or satellite only
-      False = apply to all channels
     mode : int
       0 = Absolute power
       1 = Relative to current simulation power
-    chan : int
-      Channel number (0 to 11). You can specify either an channel or
-      satellite, but not both.
-    sat : int
-      Satellite ID number (1 to 32).
     timestamp : str, optional
       timestamp is either: the time into run to apply command; or, if
       "-" command is applied, when command is received. Defaults to
@@ -342,40 +569,21 @@ class STR4500(object):
     response : CommandResponse
 
     """
-    vehicle_antenna = "v1_a1"
-    if chan and sat:
-      raise ValueError("Can't set both satellite and channel simultaneously.")
-    elif chan and (0 <= chan < 12):
-      cmd = [timestamp, "POW_MODE", vehicle_antenna, mode, chan, 1,
-             1 if all_chans else 0]
-      return self._handle(cmd)
-    elif sat and (1 <= sat < 33):
-      cmd = [timestamp, "POW_MODE", vehicle_antenna, mode, sat, 1,
-             1 if all_chans else 0]
-      return self._handle(cmd)
-    else:
-      raise ValueError("Invalid channel/satellite value.")
+    cmd = [timestamp, "POW_MODE", VEHICLE_ANTENNA, mode,
+           STR4500.chan, STR4500.is_chan, STR4500.all_chans]
+    return handle(self._socket, cmd)
 
-  def set_power_level(self, all_chans, level, absolute, chan=None, sat=None,
-                      timestamp="-"):
+  def set_power_level(self, level, absolute, timestamp="-"):
     """
-    Set power level.
+    Set power level on all channels.
 
     Parameters
     ----------
-    all_chans : bool
-      True = apply to specified channel or satellite only, False =
-      apply to all channels
     level : float
       Power level, dB (with respect to the Stanag minimum).
     absolute : bool
-      True = relative to current simulated power,
-      False = absolute power level
-    chan : int
-      Channel number (0 to 11). You can specify either an channel or
-      satellite, but not both.
-    sat : int
-      Satellite ID number (1 to 32).
+      True = absolute power level,
+      False = relative to current simulated power.
     timestamp : str, optional
       timestamp is either: the time into run to apply command; or, if
       "-" command is applied, when command is received. Defaults to
@@ -386,34 +594,19 @@ class STR4500(object):
     response : CommandResponse
 
     """
-    vehicle_antenna = "v1_a1"
-    if chan and sat:
-      raise ValueError("Can't set both satellite and channel simultaneously.")
-    elif chan and (0 <= chan < 12):
-      cmd = [timestamp, "POW_LEV", vehicle_antenna, level, chan, 1,
-             1 if all_chans else 0, 1 if absolute else 0]
-      return self._handle(cmd)
-    elif sat and (1 <= sat < 33):
-      cmd = [timestamp, "POW_LEV", vehicle_antenna, level, chan, 0,
-             1 if all_chans else 0, 1 if absolute else 0]
-      return self._handle(cmd)
-    else:
-      raise ValueError("Invalid channel/satellite value.")
+    cmd = [timestamp, "POW_LEV", VEHICLE_ANTENNA, level, STR4500.chan,
+           STR4500.is_chan, STR4500.all_chans, int(absolute)]
+    return handle(self._socket, cmd)
 
-  def set_prn_code(self, on, all_chans, chan, timestamp="-"):
+  def set_prn(self, on=True, timestamp="-"):
     """
-    Set PRN code on/off.
+    Set PRN code on/off on all channels.
 
     Parameters
     ----------
-    on : boolean
-      True = PRN code OFF,
-      False = PRN code ON
-    all_chans : boolean
-      True = apply to specified channel or satellite only,
-      False = apply to all channels
-    chan : int
-      channel no. (0 to 11)
+    on : bool
+      True = PRN code ON,
+      False = PRN code OFF.
     timestamp : str, optional
       timestamp is either: the time into run to apply command; or, if
       "-" command is applied, when command is received.
@@ -423,31 +616,28 @@ class STR4500(object):
     response : CommandResponse
 
     """
-    if 0 <= chan < 12:
-      cmd = [timestamp, "PRN_CODE", chan, all_chans, on]
-      return self._handle(cmd)
-    else:
-      raise ValueError("Invalid value of chan.")
+    cmd = [timestamp, "PRN_CODE", STR4500.chan, STR4500.all_chans, int(on)]
+    return handle(self._socket, cmd)
 
-  def set_no_hardware_flag(self, mode):
+  def enable_hardware(self, mode=True):
     """
     Set/Reset No Hardware flag.
 
     Parameters
     ----------
     mode : bool
-      True = set No hardware mode, see (5.4.3.1); False = hardware
-      enabled.
+      True = Enable hardware,
+      False = Set No hardware mode: see (5.4.3.1);.
 
     Returns
     -------
     response : CommandResponse
 
     """
-    cmd = ["HARDWARE_ON", 1 if mode else 0]
-    return self._handle(cmd)
+    cmd = ["HARDWARE_ON", int(mode)]
+    return handle(self._socket, cmd)
 
-  def set_popups(self, mode):
+  def enable_popups(self, mode=True):
     """
     Set/Disable Popup Messages on Fatal Error.
 
@@ -457,41 +647,44 @@ class STR4500(object):
     Parameters
     ----------
     mode : bool
-      True = suppress Popup messages,
-      False = enable popup messages.
+      True = Enable popup messages,
+      False = Suppress Popup messages.
 
     Returns
     -------
     response : CommandResponse
 
     """
-    cmd = ["POPUPS_ON", 1 if mode else 0]
-    return self._handle(cmd)
+    cmd = ["POPUPS_ON", int(mode)]
+    return handle(self._socket, cmd)
 
   def time(self):
     """
-    Get time into run, Returns time into run in integer seconds.
+    Get time into run.
 
     Returns
     -------
-    response : CommandResponse
+    data : float
+      Time into run in integer seconds.
 
     """
     cmd = ["TIME"]
-    return self._handle(cmd).data
+    return int(handle(self._socket, cmd).data)
 
   def scenario_duration(self):
     """
-    Get duration of scenario. Returns duration in the form d hh:mm.
+    Get duration of scenario.
 
     Returns
     -------
-    response : CommandResponse
+    data : str
+      Returns duration in the form d hh:mm.
 
     """
     cmd = ["SC_DURATION"]
-    return self._handle(cmd).data
+    return handle(self._socket, cmd).data
 
+#TODO (Buro): fix this.
 # if __name__ == "__main__":
 #     client = STR4500()
 #     client.null()
