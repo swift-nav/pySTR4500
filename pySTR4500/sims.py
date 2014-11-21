@@ -13,7 +13,7 @@
 Utilities for loading simulation scenarios.
 """
 
-SIMS_DICTIONARY = "../sim_scenarios.txt"
+SIMS_DICTIONARY = "./sim_scenarios.txt"
 
 def parse_sims_dictionary(path = SIMS_DICTIONARY):
   """

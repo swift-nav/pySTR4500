@@ -63,6 +63,9 @@ class CommandResponse(object):
     self.status = status
     self.data = data
 
+  def __eq__(self, other):
+    return self.__dict__ == other.__dict__
+
   def __repr__(self):
     val = (self.status, self.data)
     formatted = "<CommandResponse (status = %s, data = %s)>"
@@ -83,6 +86,10 @@ class CommandResponse(object):
     response : CommandResponse
 
     """
+    # TODO (Buro): Change this to throw an exception. We should never
+    # have an empty response.
+    if not response:
+      return CommandResponse()
     p = ET.fromstring(response)
     status = None
     if p.find('status') is not None:
@@ -95,7 +102,7 @@ class CommandResponse(object):
     if p.find('error') is not None:
       msg = p.find('error').text
       raise RuntimeError("STR4500 returned error: %s" % msg)
-    data = p.find('data').text if p.find('data') else None
+    data = p.find('data').text if p.find('data') is not None else None
     return CommandResponse(status, data)
 
 def encode(cmd):
@@ -147,7 +154,6 @@ def handle(sock, cmd):
   response : CommandResponse
 
   """
-  print encode(cmd)
   return CommandResponse.fromstring(dispatch(sock, encode(cmd)))
 
 class Channel(object):
@@ -414,7 +420,6 @@ class STR4500(object):
     formatted = "<STR4500 (host = %s, port = %s, connected = %s)>"
     return formatted % val
 
-#TODO (Buro): test this one.
   def select_scenario(self, filename):
     """
     Select scenario. select_scenario may be called before a scenario has run,
@@ -482,16 +487,12 @@ class STR4500(object):
     cmd = ["NULL"]
     return handle(self._socket, cmd)
 
-  def end_scenario(self, timestamp="-", stop_mode=0, save=True):
+  def end_scenario(self, stop_mode=0, save=False, timestamp="-"):
     """
     End running scenario.
 
     Parameters
     ----------
-    timestamp : str, optional
-      timestamp is either: the time into run to apply command; or, if
-      "-" command is applied, when command is received. Defaults to
-      "-".
     stop_mode : int, optional
       0 = stop (scenario left in ENDED state),
       1 = stop scenario and rewind to INITIALISED state,
@@ -501,6 +502,10 @@ class STR4500(object):
     save : int, optional
       True = save logged data at end of run
       False = don't save logged data
+    timestamp : str, optional
+      timestamp is either: the time into run to apply command; or, if
+      "-" command is applied, when command is received. Defaults to
+      "-".
 
     Returns
     -------

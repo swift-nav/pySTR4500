@@ -17,13 +17,31 @@ Assuming that you have a network connection to the STR500,
 
 ```python
 from pySTR4500.client import *
-with STR4500("192.168.1.209") as dev:
-  dev.null()
-  dev.select_scenario("C:/filepath/to/scenario/")
-  dev.run_scenario()
-  dev.end_scenario()
-  dev.rewind()
-  #etc.
+from pySTR4500.sims import *
+
+# Instantate device, perfom a network connection test.
+dev = STR4500("192.168.1.209")
+dev.status()
+dev.select_scenario("C:/filepath/to/scenario/")
+dev.select_scenario(parse_sims_dictionary()[2])
+dev.run_scenario()
+dev.end_scenario()
+dev.rewind_scenario()
+
+# Set all channels
+power = 1.0
+dev.set_prn(on=True)
+dev.set_power(on=True)
+dev.set_power_level(level=float(power), absolute=True)
+
+# Set channels (individually)
+chan = 1
+dev.chan.set_prn(on=True)
+dev.chan.set_power(chan, on=True)
+dev.chan.set_power_mode(chan, mode=0)
+dev.chan.set_prn(chan, on=True)
+dev.chan.set_power_level(chan, level=float(power), absolute=True)
+dev.chan.set_power_level(chan, level=float(power), absolute=False)
 ```
 
 ## STR4500 Software Setup
