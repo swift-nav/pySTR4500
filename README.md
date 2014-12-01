@@ -69,6 +69,19 @@ To setup and test a VirtualBox VM network connection:
 4. `telnet <ip address> 15650` from the host or guest and send a
    `NULL` command to check for a response.
 
+## Running tests
+
+There are two types of tests: one using a mocked TCP echo server to
+test for data payloads and integration tests requiring a conection to
+a live instrument. To run the first,
+
+```shell
+py.test -q tests/
+```
+
+The second class has been tested manually, but is commented out until
+I figure out how to use Python's test selectors.
+
 ## LICENSE
 
 Copyright © 2014 Swift Navigation

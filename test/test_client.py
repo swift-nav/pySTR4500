@@ -26,8 +26,7 @@ import threading
 class MockRequestHandler(SocketServer.BaseRequestHandler):
   def handle(self):
     data = self.request.recv(1024)
-    cur_thread = threading.current_thread()
-    response = "<msg><status>0</status></msg>"
+    response = "<msg><status>1</status><data>%s</data></msg>" % data
     self.request.sendall(response)
 
 class MockServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
@@ -58,11 +57,9 @@ def test_response_parsing():
     err = "<msg><status>0</status><error>ERROR</error></msg>"
     CommandResponse.fromstring(err)
 
-def test_echo_sim():
+def setup_mock_server():
   """
-  Setup a echo test with a TCP server: do we receive the right
-  TELNET commands on the server side?
-
+  Setup an TCP echo server.
   """
   # Setup a mocked tests
   HOST, PORT = "localhost", 0
@@ -71,53 +68,57 @@ def test_echo_sim():
   server_thread = threading.Thread(target=server.serve_forever)
   server_thread.daemon = True
   server_thread.start()
+  return (ip, port)
+
+def test_echo_sim():
+  """
+  An echo test with a TCP server: do we receive the right
+  TELNET commands on the server side?
+
+  """
+  ip, port = setup_mock_server()
   # Simulations
   dev = STR4500(ip, port)
-  tr_obj = lambda data: CommandResponse(None, data)
-  assert dev.status() == tr_obj(None)
+  tr_obj = lambda data: CommandResponse("Invalid scenario", data)
+  assert dev.status() == tr_obj("NULL")
   for k, v in parse_sims_dictionary().iteritems():
-    assert dev.select_scenario(v) == tr_obj(None)
-  assert dev.select_scenario(parse_sims_dictionary()[2]) == tr_obj(None)
-  assert dev.run_scenario() == tr_obj(None)
-  assert dev.scenario_duration() == tr_obj(None)
-  assert dev.time() == tr_obj(None)
-  assert dev.end_scenario(stop_mode=0) == tr_obj(None)
-  assert dev.end_scenario(stop_mode=1) == tr_obj(None)
-  assert dev.rewind_scenario() == tr_obj(None)
+    assert dev.select_scenario(v) == tr_obj("SC,%s" % v)
+  assert dev.run_scenario() == tr_obj("RU")
+  assert dev.scenario_duration() == "SC_DURATION"
+  assert dev.end_scenario(stop_mode=0) == tr_obj("-,EN,0,0")
+  assert dev.end_scenario(stop_mode=1) == tr_obj("-,EN,1,0")
+  assert dev.rewind_scenario() == tr_obj("RW")
   # Tests across all channels.
-  assert dev.set_power(on=True) == tr_obj(None)
-  assert dev.set_power(on=False) == tr_obj(None)
-  assert dev.set_power_mode(mode=0) == tr_obj(None)
-  assert dev.set_power_mode(mode=1) == tr_obj(None)
+  assert dev.set_power(on=True) == tr_obj("-,POW_ON,v1_a1,1,0,1,1")
+  assert dev.set_power(on=False) == tr_obj("-,POW_ON,v1_a1,0,0,1,1")
+  assert dev.set_power_mode(mode=0) == tr_obj("-,POW_MODE,v1_a1,0,0,1,1")
+  assert dev.set_power_mode(mode=1) == tr_obj("-,POW_MODE,v1_a1,1,0,1,1")
   for power in xrange(0, 10):
     assert dev.set_power_level(level=float(power), absolute=True) \
-      == tr_obj(None)
+      == tr_obj("-,POW_LEV,v1_a1,%s,0,1,1,1" % float(power))
     assert dev.set_power_level(level=float(power), absolute=False) \
-      == tr_obj(None)
-  assert dev.set_prn(on=True) == tr_obj(None)
-  assert dev.set_prn(on=False) == tr_obj(None)
-  assert dev.enable_hardware(mode=True) == tr_obj(None)
-  assert dev.enable_hardware(mode=False) == tr_obj(None)
-  assert dev.enable_hardware(mode=True) == tr_obj(None)
-  assert dev.enable_popups(mode=True) == tr_obj(None)
-  assert dev.enable_popups(mode=False) == tr_obj(None)
-  assert dev.scenario_duration() == tr_obj(None)
-  assert dev.time() == tr_obj(None)
+      == tr_obj("-,POW_LEV,v1_a1,%s,0,1,1,0" % float(power))
+  assert dev.set_prn(on=True) == tr_obj("-,PRN_CODE,0,1,1")
+  assert dev.set_prn(on=False) == tr_obj("-,PRN_CODE,0,1,0")
+  assert dev.enable_hardware(mode=True) == tr_obj("HARDWARE_ON,1")
+  assert dev.enable_hardware(mode=False) == tr_obj("HARDWARE_ON,0")
+  assert dev.enable_hardware(mode=True) == tr_obj("HARDWARE_ON,1")
+  assert dev.enable_popups(mode=True) == tr_obj("POPUPS_ON,1")
+  assert dev.enable_popups(mode=False) == tr_obj("POPUPS_ON,0")
   # Iterate through all the channels.
   for chan in xrange(0, 11):
-    assert dev.set_power(chan, on=True) == tr_obj(None)
-    assert dev.set_power(chan, on=False) == tr_obj(None)
-    assert dev.set_power_mode(chan, mode=0) == tr_obj(None)
-    assert dev.set_power_mode(chan, mode=1) == tr_obj(None)
-    assert dev.set_prn(chan, on=True)  == tr_obj(None)
-    assert dev.set_prn(chan, on=False) == tr_obj(None)
-    assert dev.set_prn(chan, on=True)  == tr_obj(None)
+    assert dev.chan.set_power(chan, on=True) == tr_obj("-,POW_ON,v1_a1,1,%s,1,0" % chan)
+    assert dev.chan.set_power(chan, on=False) == tr_obj("-,POW_ON,v1_a1,0,%s,1,0" % chan)
+    assert dev.chan.set_power_mode(chan, mode=0) == tr_obj("-,POW_MODE,v1_a1,0,%s,1,0" % chan)
+    assert dev.chan.set_power_mode(chan, mode=1) == tr_obj("-,POW_MODE,v1_a1,1,%s,1,0" % chan)
+    assert dev.chan.set_prn(chan, on=True)  == tr_obj("-,PRN_CODE,%s,0,1" % chan)
+    assert dev.chan.set_prn(chan, on=False) == tr_obj("-,PRN_CODE,%s,0,0" % chan)
     # Iterate through all the power levels for all of the channels.
     for power in xrange(0, 10):
-      assert dev.set_power_level(chan, level=float(power), absolute=True) \
-        == tr_obj(None)
-      assert dev.set_power_level(chan, level=float(power), absolute=False) \
-        == tr_obj(None)
+      assert dev.chan.set_power_level(chan, level=float(power), absolute=True) \
+        == tr_obj("-,POW_LEV,v1_a1,%s,%s,1,0,1" % (float(power), chan))
+      assert dev.chan.set_power_level(chan, level=float(power), absolute=False) \
+        == tr_obj("-,POW_LEV,v1_a1,%s,%s,1,0,0" % (float(power), chan))
 
 # Internal IP for live STR4500.
 STR4500_IP = "192.168.1.169"

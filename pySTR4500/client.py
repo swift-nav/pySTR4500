@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#
 # Copyright (C) 2014 Swift Navigation Inc.
 # API documentation:
 # Copyright (C) Spirent Communications SW Ltd.
@@ -118,14 +119,18 @@ def encode(cmd):
   """
   return ','.join(map(str, cmd))
 
-def dispatch(sock, msg):
+def dispatch(host, port, msg):
   """
   Blocking I/O to the socket.
 
   Parameters
   ----------
-  sock : socket
-    Open network socket
+  host : str
+    IPv4 address or hostname. If you're running this off of a VM,
+    probably the IPv4 address of your Windows VM. Defaults to
+    localhost.
+  port : int
+    STR4500 Simplex socket is actually hardwired to port 15650 :( .
   msg : str
     Command string
 
@@ -135,17 +140,28 @@ def dispatch(sock, msg):
     XML response string.
 
   """
-  sock.send(msg)
-  return sock.recv(BUFFER_SIZE)
+  sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+  sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+  try:
+    sock.connect((host, port))
+    sock.setblocking(1)
+    sock.sendall(msg)
+    return sock.recv(BUFFER_SIZE)
+  finally:
+    sock.close()
 
-def handle(sock, cmd):
+def handle(host, port, cmd):
   """
   Given a command tuple, encode, issue, and decode.
 
   Parameters
   ----------
-  sock : socket
-    Open network socket
+  host : str
+    IPv4 address or hostname. If you're running this off of a VM,
+    probably the IPv4 address of your Windows VM. Defaults to
+    localhost.
+  port : int
+    STR4500 Simplex socket is actually hardwired to port 15650 :( .
   cmd : [str]
     Vector of command parameters.
 
@@ -154,7 +170,7 @@ def handle(sock, cmd):
   response : CommandResponse
 
   """
-  return CommandResponse.fromstring(dispatch(sock, encode(cmd)))
+  return CommandResponse.fromstring(dispatch(host, port, encode(cmd)))
 
 class Channel(object):
   """
@@ -164,8 +180,9 @@ class Channel(object):
   is_chan = int(True)
   all_chans = int(False)
 
-  def __init__(self, sock):
-    self._socket = sock
+  def __init__(self, host, port):
+    self.host = host
+    self.port = port
 
   @staticmethod
   def is_valid(chan):
@@ -196,7 +213,7 @@ class Channel(object):
       raise ValueError("Invalid channel value.")
     cmd = [timestamp, "POW_ON", VEHICLE_ANTENNA, int(on), chan,
            Channel.is_chan, Channel.all_chans]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power_mode(self, chan, mode, timestamp="-"):
     """
@@ -223,7 +240,7 @@ class Channel(object):
       raise ValueError("Invalid channel value.")
     cmd = [timestamp, "POW_MODE", VEHICLE_ANTENNA, mode, chan,
            Channel.is_chan, Channel.all_chans]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power_level(self, chan, level, absolute, timestamp="-"):
     """
@@ -252,7 +269,7 @@ class Channel(object):
       raise ValueError("Invalid channel value.")
     cmd = [timestamp, "POW_LEV", VEHICLE_ANTENNA, level, chan, Channel.is_chan,
            Channel.all_chans, int(absolute)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_prn(self, chan, on, timestamp="-"):
     """
@@ -277,7 +294,7 @@ class Channel(object):
     if not Channel.is_valid(chan):
       raise ValueError("Invalid channel value.")
     cmd = [timestamp, "PRN_CODE", chan, Channel.all_chans, int(on)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
 class Satellite(object):
   """
@@ -287,8 +304,9 @@ class Satellite(object):
   is_chan = int(True)
   all_chans = int(False)
 
-  def __init__(self, sock):
-    self._socket = sock
+  def __init__(self, host, port):
+    self.host = host
+    self.port = port
 
   @staticmethod
   def is_valid(sat):
@@ -317,7 +335,7 @@ class Satellite(object):
     """
     cmd = [timestamp, "POW_ON", VEHICLE_ANTENNA, int(on), sat,
            Satellite.is_chan, Satellite.all_chans]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power_mode(self, sat, mode, timestamp="-"):
     """
@@ -344,7 +362,7 @@ class Satellite(object):
       raise ValueError("Invalid satellite value.")
     cmd = [timestamp, "POW_MODE", VEHICLE_ANTENNA, mode, sat,
            Satellite.is_chan, Satellite.all_chans]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power_level(self, sat, level, absolute, timestamp="-"):
     """
@@ -373,7 +391,7 @@ class Satellite(object):
       raise ValueError("Invalid satellite value.")
     cmd = [timestamp, "POW_LEV", VEHICLE_ANTENNA, level, sat, Satellite.is_chan,
            Satellite.all_chans, int(absolute)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
 class STR4500(object):
   """
@@ -401,19 +419,10 @@ class STR4500(object):
   def __init__(self, host="127.0.0.1", port=15650):
     self.host = host
     self.port = port
-    self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-    self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self._socket.connect((self.host, self.port))
-    self._socket.setblocking(1)
     # Issue a status check for network connection.
     self.connected = self.status() is not None
-    self.chan = Channel(self._socket)
-    self.sat = Satellite(self._socket)
-
-  def __del__(self):
-    if self._socket:
-      self._socket.close()
-      self._socket = None
+    self.chan = Channel(self.host, self.port)
+    self.sat = Satellite(self.host, self.port)
 
   def __repr__(self):
     val = (self.host, self.port, self.connected)
@@ -437,7 +446,7 @@ class STR4500(object):
 
     """
     cmd = ["SC", filename]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_trigger(self, mode):
     """
@@ -459,7 +468,7 @@ class STR4500(object):
     if mode not in [0, 1, 2]:
       raise ValueError("Invalid trigger mode.")
     cmd = ["TR", mode]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def run_scenario(self):
     """
@@ -473,7 +482,7 @@ class STR4500(object):
 
     """
     cmd = ["RU"]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def status(self):
     """
@@ -485,7 +494,7 @@ class STR4500(object):
 
     """
     cmd = ["NULL"]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def end_scenario(self, stop_mode=0, save=False, timestamp="-"):
     """
@@ -515,7 +524,7 @@ class STR4500(object):
     if stop_mode not in [0, 1, 2]:
       raise ValueError("Invalid value of n.")
     cmd = [timestamp, "EN", stop_mode, int(save)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def rewind_scenario(self):
     """
@@ -530,7 +539,7 @@ class STR4500(object):
     response : CommandResponse
     """
     cmd = ["RW"]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power(self, on, timestamp="-"):
     """
@@ -553,7 +562,7 @@ class STR4500(object):
     """
     cmd = [timestamp, "POW_ON", VEHICLE_ANTENNA, int(on), STR4500.chan,
            STR4500.is_chan, STR4500.all_chans]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power_mode(self, mode, timestamp="-"):
     """
@@ -576,7 +585,7 @@ class STR4500(object):
     """
     cmd = [timestamp, "POW_MODE", VEHICLE_ANTENNA, mode,
            STR4500.chan, STR4500.is_chan, STR4500.all_chans]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_power_level(self, level, absolute, timestamp="-"):
     """
@@ -601,7 +610,7 @@ class STR4500(object):
     """
     cmd = [timestamp, "POW_LEV", VEHICLE_ANTENNA, level, STR4500.chan,
            STR4500.is_chan, STR4500.all_chans, int(absolute)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def set_prn(self, on=True, timestamp="-"):
     """
@@ -622,7 +631,7 @@ class STR4500(object):
 
     """
     cmd = [timestamp, "PRN_CODE", STR4500.chan, STR4500.all_chans, int(on)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def enable_hardware(self, mode=True):
     """
@@ -640,7 +649,7 @@ class STR4500(object):
 
     """
     cmd = ["HARDWARE_ON", int(mode)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def enable_popups(self, mode=True):
     """
@@ -661,7 +670,7 @@ class STR4500(object):
 
     """
     cmd = ["POPUPS_ON", int(mode)]
-    return handle(self._socket, cmd)
+    return handle(self.host, self.port, cmd)
 
   def time(self):
     """
@@ -674,7 +683,7 @@ class STR4500(object):
 
     """
     cmd = ["TIME"]
-    return int(handle(self._socket, cmd).data)
+    return int(handle(self.host, self.port, cmd).data)
 
   def scenario_duration(self):
     """
@@ -687,7 +696,7 @@ class STR4500(object):
 
     """
     cmd = ["SC_DURATION"]
-    return handle(self._socket, cmd).data
+    return handle(self.host, self.port, cmd).data
 
 #TODO (Buro): fix this.
 # if __name__ == "__main__":
